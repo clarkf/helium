@@ -1,6 +1,5 @@
 import Connect from "./app/Connect";
 
-import "./App.css";
 import { useApp } from "./state";
 
 export default function App() {
@@ -8,16 +7,24 @@ export default function App() {
 
   return (
     <>
-      <h1>Helium</h1>
-
-      <Connect />
-
-      <div>
-        <h4>State</h4>
-        <code>
-          <pre>{JSON.stringify(state, null, 4)}</pre>
-        </code>
-      </div>
+      <FullScreen>
+        <h1>Welcome to Helium</h1>
+        <Connect />
+        <div>
+          <h4>State</h4>
+          <code>
+            <pre>{JSON.stringify(state, null, 4)}</pre>
+          </code>
+        </div>
+      </FullScreen>
     </>
+  );
+}
+
+function FullScreen({ children }: React.PropsWithChildren): JSX.Element {
+  return (
+    <div className="full-screen">
+      <div>{children}</div>
+    </div>
   );
 }
