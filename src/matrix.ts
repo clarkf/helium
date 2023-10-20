@@ -1,3 +1,9 @@
+/** Alias for indicating a type is a room id, e.g. !room:host */
+export type RoomId = string;
+
+/** Alias for indicating a type is a user id, e.g. @user:host */
+export type UserId = string;
+
 export interface DiscoveryInformation {
   "m.homeserver": { base_url: string };
 }
@@ -17,6 +23,61 @@ interface LoginPasswordRequest {
 
 export interface LoginResponse {
   access_token: string;
+}
+
+export interface SyncResponse {
+  rooms: {
+    join: Record<
+      RoomId,
+      {
+        state: { events: ClientEventWithoutRoomID[] };
+      }
+    >;
+  };
+}
+
+export type ClientEventWithoutRoomID = Omit<ClientEvent, "room_id">;
+
+export type ClientEvent = RoomCreateEvent | RoomMemberEvent | RoomNameEvent;
+
+interface StateEvent<T, C, S = string> {
+  type: T;
+  event_id: string;
+  origin_server_ts: number;
+  room_id: string;
+  content: C;
+  state_key: S;
+}
+
+export type RoomCreateEvent = StateEvent<
+  "m.room.create",
+  {
+    creator?: string;
+    room_version?: string;
+  }
+>;
+
+export type RoomMemberEvent = StateEvent<
+  "m.room.member",
+  {
+    membership: "invite" | "join" | "knock" | "leave" | "ban";
+    reason?: string;
+  }
+>;
+
+export type RoomNameEvent = StateEvent<
+  "m.room.name",
+  {
+    name: string;
+  }
+>;
+
+interface Filter {
+  room?: /* RoomFilter */ {
+    state?: /* StateFilter */ {
+      lazy_load_members?: boolean;
+    };
+  };
 }
 
 /**
@@ -100,6 +161,45 @@ export async function login(
   const response = await fetch(url.toString(), {
     method: "POST",
     body: JSON.stringify(request),
+  });
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Matrix homeserver responded with an unexpected status code (${response.status}).`,
+    );
+  }
+
+  return await response.json();
+}
+
+export interface SyncOptions {
+  filter?: string | Filter;
+}
+
+export const FILTER_LAZY_LOAD: Filter = {
+  room: {
+    state: {
+      lazy_load_members: true,
+    },
+  },
+};
+
+export async function sync(
+  discovery: DiscoveryInformation,
+  token: LoginResponse,
+  options: SyncOptions = {},
+): Promise<SyncResponse> {
+  const url = buildUrl(discovery, "/_matrix/client/v3/sync");
+
+  if (typeof options.filter === "string")
+    url.searchParams.append("filter", options.filter);
+  else if (options.filter !== undefined)
+    url.searchParams.append("filter", JSON.stringify(options.filter));
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${token.access_token}`,
+    },
   });
 
   if (response.status !== 200) {

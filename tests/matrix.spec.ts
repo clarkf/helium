@@ -121,3 +121,47 @@ describe("login", () => {
     );
   });
 });
+
+describe("sync", () => {
+  const discovery: matrix.DiscoveryInformation = {
+    "m.homeserver": {
+      base_url: "https://matrix.example.com",
+    },
+  };
+
+  const token: matrix.LoginResponse = {
+    access_token: "12345",
+  };
+
+  const server = setupServer(
+    rest.get(
+      "https://matrix.example.com/_matrix/client/v3/sync",
+      (_, res, ctx) => res(ctx.status(200), ctx.json({})),
+    ),
+
+    rest.get("https://500.example.com/_matrix/client/v3/sync", (_, res, ctx) =>
+      res(ctx.status(500), ctx.json({})),
+    ),
+  );
+
+  beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+  afterAll(() => server.close());
+  afterEach(() => server.resetHandlers());
+
+  it("should sync", async () => {
+    const response = await matrix.sync(discovery, token);
+
+    expect(response).not.toBe(null);
+  });
+
+  it("should error on invalid status code", async () => {
+    const thisDiscovery: matrix.DiscoveryInformation = {
+      ...discovery,
+      "m.homeserver": {
+        base_url: "https://500.example.com",
+      },
+    };
+
+    await expect(matrix.sync(thisDiscovery, token)).rejects.toBeTruthy();
+  });
+});

@@ -1,12 +1,14 @@
 import { useState } from "react";
 
-import { discover, login } from "../matrix";
+import { FILTER_LAZY_LOAD, discover, login, sync } from "../matrix";
+import { useApp } from "../state";
 
 interface Props {
   onConnect?: () => void;
 }
 
 export default function Connect({ onConnect }: Props): JSX.Element {
+  const handleSync = useApp((s) => s.handleSync);
   const [host, setHost] = useState("");
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +17,10 @@ export default function Connect({ onConnect }: Props): JSX.Element {
   function handleSubmit(e: React.FormEvent): void {
     e.preventDefault();
     connect(host, userId, password)
-      .then(() => onConnect?.())
+      .then(({ discovery, token }) => {
+        sync(discovery, token, { filter: FILTER_LAZY_LOAD }).then(handleSync);
+        onConnect?.();
+      })
       .catch((e) => setError(e.toString()));
   }
 
@@ -59,13 +64,11 @@ export default function Connect({ onConnect }: Props): JSX.Element {
   );
 }
 
-async function connect(
-  host: string,
-  user: string,
-  password: string,
-): Promise<void> {
+async function connect(host: string, user: string, password: string) {
   const discovery = await discover(host);
   const token = await login(discovery, user, password);
 
   console.debug({ discovery, token });
+
+  return { discovery, token };
 }
