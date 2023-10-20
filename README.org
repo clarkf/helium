@@ -1,0 +1,16 @@
+* Helium
+
+Helium is a prototype of a lightweight, instant-messaging-focused
+Matrix client. **It is currently incomplete and unusable**, but might
+someday be worth your time.
+
+** Why?
+
+Why not [[https://github.com/vector-im/hydrogen-web][Hydrogen]]? Or any of the multitude of other clients? For
+starters, this is an excuse to explore the nitty-gritty of the Matrix
+API. Secondly, and perhaps more importantly, it's an opportunity to
+play with the UI and UX that comes with writing a chat client.
+
+** License
+
+See 'COPYING' in the root directory. MIT license.
