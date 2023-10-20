@@ -1,0 +1,51 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Connect /> > renders 1`] = `
+<DocumentFragment>
+  <form>
+    <div>
+      <label
+        for="connect-host"
+      >
+        Host
+      </label>
+      <input
+        id="connect-host"
+        type="text"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        for="connect-user"
+      >
+        User ID
+      </label>
+      <input
+        id="connect-user"
+        type="text"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        for="connect-password"
+      >
+        Password
+      </label>
+      <input
+        id="connect-password"
+        type="password"
+        value=""
+      />
+    </div>
+    <div>
+      <button
+        type="submit"
+      >
+        Connect
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;
