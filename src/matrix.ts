@@ -4,6 +4,11 @@ export type RoomId = string;
 /** Alias for indicating a type is a user id, e.g. @user:host */
 export type UserId = string;
 
+export interface Connection {
+  discovery: DiscoveryInformation;
+  token: LoginResponse;
+}
+
 export interface DiscoveryInformation {
   "m.homeserver": { base_url: string };
 }
@@ -39,7 +44,17 @@ export interface SyncResponse {
 
 export type ClientEventWithoutRoomID = Omit<ClientEvent, "room_id">;
 
-export type ClientEvent = RoomCreateEvent | RoomMemberEvent | RoomNameEvent;
+export type ClientEvent =
+  | RoomCreateEvent
+  | RoomMemberEvent
+  | RoomNameEvent
+  | RoomCanonicalAliasEvent
+  | RoomAvatarEvent
+  | UnimportantEvent<"m.room.join_rules">
+  | UnimportantEvent<"m.room.power_levels">
+  | UnimportantEvent<"m.room.server_acl">
+  | UnimportantEvent<"m.room.guest_access">
+  | UnimportantEvent<"m.room.history_visibility">;
 
 interface StateEvent<T, C, S = string> {
   type: T;
@@ -72,6 +87,26 @@ export type RoomNameEvent = StateEvent<
     name: string;
   }
 >;
+
+export type RoomCanonicalAliasEvent = StateEvent<
+  "m.room.canonical_alias",
+  {
+    alias?: string | null;
+    alt_aliases?: string[];
+  }
+>;
+
+// TODO handle info fields for encrypted rooms
+export type RoomAvatarEvent = StateEvent<
+  "m.room.avatar",
+  {
+    /** Will be an mxc:// url */
+    url?: string;
+  }
+>;
+
+// TODO
+type UnimportantEvent<T extends string> = StateEvent<T, unknown>;
 
 interface Filter {
   room?: /* RoomFilter */ {
@@ -210,4 +245,50 @@ export async function sync(
   }
 
   return await response.json();
+}
+
+/**
+ * https://spec.matrix.org/v1.8/client-server-api/#get_matrixmediav3thumbnailservernamemediaid
+ */
+export function getThumbnailUrl(
+  connection: Connection,
+  serverName: string,
+  mediaId: string,
+) {
+  const baseUrl = buildUrl(
+    connection.discovery,
+    `/_matrix/media/v3/thumbnail/${serverName}/${mediaId}`,
+  );
+  baseUrl.searchParams.append("allow_redirect", "true");
+  baseUrl.searchParams.append("height", (96).toString());
+  baseUrl.searchParams.append("width", (96).toString());
+  return baseUrl.toString();
+}
+
+/**
+ * Parse a Matrix Content URI (mxc://).
+ *
+ * https://spec.matrix.org/v1.8/client-server-api/#matrix-content-mxc-uris
+ */
+export function parseMxcUrl(url: string) {
+  /// split a string at a `needle` exactly once, returning null if
+  /// `needle` is not present in `haystack`
+  function partition(
+    haystack: string,
+    needle: string,
+  ): [string, string] | null {
+    const index = haystack.indexOf(needle);
+    if (index === -1) return null;
+    return [haystack.substring(0, index), haystack.substring(index + 1)];
+  }
+
+  // url = mxc://<server-name>/<media-id>
+  const withoutProtocol = url.substring("mxc://".length); // <server-name>/<media-id>
+
+  const partitioned = partition(withoutProtocol, "/");
+  if (partitioned === null)
+    throw new Error("invalid Matrix Content URI: " + url);
+
+  const [serverName, mediaId] = partitioned;
+  return { serverName, mediaId };
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { setupServer } from "msw/node";
 import { rest } from "msw";
+import fc from "fast-check";
 
 import * as matrix from "../src/matrix";
 import { resolveLogin } from "./handlers";
@@ -164,4 +165,59 @@ describe("sync", () => {
 
     await expect(matrix.sync(thisDiscovery, token)).rejects.toBeTruthy();
   });
+});
+
+describe("getThumbnailUrl", () => {
+  const discovery: matrix.DiscoveryInformation = {
+    "m.homeserver": {
+      base_url: "https://matrix.example.com",
+    },
+  };
+
+  const token: matrix.LoginResponse = {
+    access_token: "12345",
+  };
+
+  const connection: matrix.Connection = { discovery, token };
+
+  const slug = fc.stringMatching(/^[a-zA-Z0-9]$/);
+
+  it("should generate proper urls", () =>
+    fc.assert(
+      fc.property(slug, slug, (serverName, mediaId) => {
+        const str = matrix.getThumbnailUrl(connection, serverName, mediaId);
+        const url = new URL(str);
+        expect(url.pathname).toStrictEqual(
+          `/_matrix/media/v3/thumbnail/${encodeURI(serverName)}/${encodeURI(
+            mediaId,
+          )}`,
+        );
+      }),
+    ));
+});
+
+describe("parseMxcUrl", () => {
+  // Is there a better way to do this? I have to imagine that
+  // shrinking to a regex isn't particularly efficient.
+  const arbServerName = fc.stringMatching(/^[^/]$/);
+
+  it.each([
+    ["mxc://example.org/SEsfnsuifSDFSSEF", "example.org", "SEsfnsuifSDFSSEF"],
+    ["mxc://localhost/wefuiwegh8742w", "localhost", "wefuiwegh8742w"],
+  ])("should parse %s", (input, server, mediaId) => {
+    const actual = matrix.parseMxcUrl(input);
+    expect(actual.serverName).toBe(server);
+    expect(actual.mediaId).toBe(mediaId);
+  });
+
+  it("should parse any mxc", () =>
+    fc.assert(
+      // serverName logically can't contain a slash, since that's the
+      // delimiter that separates it from the tail
+      fc.property(arbServerName, fc.string(), (serverName, mediaId) => {
+        const actual = matrix.parseMxcUrl(`mxc://${serverName}/${mediaId}`);
+        expect(actual.serverName).toBe(serverName);
+        expect(actual.mediaId).toBe(mediaId);
+      }),
+    ));
 });

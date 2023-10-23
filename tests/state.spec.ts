@@ -16,18 +16,23 @@ describe("reduceSync", () => {
   function mkSync(events: ClientEvent[]): SyncResponse {
     return events.reduce<SyncResponse>(
       (s: SyncResponse, e: ClientEvent): SyncResponse => ({
+        ...s,
         rooms: {
           join: {
-            ...s.rooms.join,
+            ...s.rooms?.join,
             [e.room_id]: {
               state: {
-                events: [...(s.rooms.join[e.room_id]?.state.events ?? []), e],
+                events: [
+                  ...(s.rooms?.join?.[e.room_id]?.state?.events ?? []),
+                  e,
+                ],
               },
             },
           },
         },
       }),
       {
+        next_batch: "test",
         rooms: { join: {} },
       },
     );
@@ -63,7 +68,7 @@ describe("reduceSync", () => {
       ]),
     );
 
-    expect(Object.keys(after.rooms)).toContain("!room");
+    expect(Object.keys(after.rooms ?? {})).toContain("!room");
   });
 
   it("should handle membership changes", () => {
@@ -110,9 +115,38 @@ describe("reduceSync", () => {
       ]),
     );
 
-    const room = after.rooms[rid];
+    const room = after.rooms?.[rid];
     if (!room) throw new Error("room missing!!!");
     expect(room.members).toContain("@bob:example.org");
     expect(room.members).not.toContain("@alice:example.org");
+  });
+
+  it("should handle canonical aliases", () => {
+    const initial: AppState = {
+      connection,
+      rooms: {},
+    };
+
+    const rid = "!room";
+    const alias = "#room:example.org";
+
+    const after = reduceSync(
+      initial,
+      mkSync([
+        {
+          event_id: "1",
+          room_id: rid,
+          origin_server_ts: 1,
+          type: "m.room.canonical_alias",
+          state_key: "@alice:example.org",
+          content: {
+            alias,
+          },
+        },
+      ]),
+    );
+
+    const room = after.rooms?.[rid];
+    expect(room?.canonical_alias).toBe(alias);
   });
 });

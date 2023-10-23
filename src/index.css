@@ -100,3 +100,8 @@ ul.nav a {
 ul.nav a:hover {
   background-color: var(--waikawa-gray-400);
 }
+
+.sidebar .nav img {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
