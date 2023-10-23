@@ -9,8 +9,10 @@ import type {
 
 import { create } from "zustand";
 
+type Connection = { token: LoginResponse; discovery: DiscoveryInformation };
+
 export interface AppState {
-  connection: null | { token: LoginResponse; discovery: DiscoveryInformation };
+  connection: null | Connection;
   rooms: Record<RoomId, RoomState>;
 }
 
@@ -23,8 +25,9 @@ export function reduceSync(
   state: Readonly<AppState>,
   sync: SyncResponse,
 ): AppState {
-  for (const [roomId, def] of Object.entries(sync.rooms.join)) {
-    const events: ClientEvent[] = def.state.events.map(
+  const join = Object.entries(sync.rooms?.join ?? {});
+  for (const [roomId, def] of join) {
+    const events: ClientEvent[] = (def.state?.events ?? []).map(
       (e) => ({ ...e, room_id: roomId }) as ClientEvent,
     );
     state = events.reduce((s, e) => reduceEvent(s, e), state);
@@ -88,11 +91,13 @@ function reduceRoomEvent(
 }
 
 export interface AppStore extends AppState {
+  setConnection: (connection: Connection) => void;
   handleSync: (sync: SyncResponse) => void;
 }
 
 export const useApp = create<AppStore>()((set) => ({
   connection: null,
   rooms: {},
+  setConnection: (connection) => set({ connection, rooms: {} }),
   handleSync: (sync) => set((state) => reduceSync(state, sync)),
 }));

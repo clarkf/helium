@@ -14,21 +14,21 @@ describe("reduceSync", () => {
   };
 
   function mkSync(events: ClientEvent[]): SyncResponse {
-    return events.reduce(
-      (s: SyncResponse, e) => ({
+    return events.reduce<SyncResponse>(
+      (s: SyncResponse, e: ClientEvent): SyncResponse => ({
         rooms: {
-          joined: {
-            ...s.rooms.joined,
+          join: {
+            ...s.rooms.join,
             [e.room_id]: {
               state: {
-                events: [...(s.rooms.joined[e.room_id]?.state.events ?? []), e],
+                events: [...(s.rooms.join[e.room_id]?.state.events ?? []), e],
               },
             },
           },
         },
       }),
       {
-        rooms: { joined: {} },
+        rooms: { join: {} },
       },
     );
   }

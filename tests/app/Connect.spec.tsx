@@ -15,7 +15,7 @@ import { setupServer } from "msw/node";
 import { rest } from "msw";
 
 import Connect from "../../src/app/Connect";
-import { resolveDiscovery, resolveLogin } from "../handlers";
+import { resolveDiscovery, resolveEmptySync, resolveLogin } from "../handlers";
 
 describe("<Connect />", () => {
   const server = setupServer(
@@ -30,6 +30,10 @@ describe("<Connect />", () => {
     rest.post(
       "https://matrix.example.com/_matrix/client/v3/login",
       resolveLogin((user, pass) => user == "user" && pass == "p@ssword"),
+    ),
+    rest.get(
+      "https://matrix.example.com/_matrix/client/v3/sync",
+      resolveEmptySync,
     ),
   );
   beforeAll(() => server.listen({ onUnhandledRequest: "error" }));

@@ -8,6 +8,7 @@ interface Props {
 }
 
 export default function Connect({ onConnect }: Props): JSX.Element {
+  const setConnection = useApp((s) => s.setConnection);
   const handleSync = useApp((s) => s.handleSync);
   const [host, setHost] = useState("");
   const [userId, setUserId] = useState("");
@@ -18,6 +19,7 @@ export default function Connect({ onConnect }: Props): JSX.Element {
     e.preventDefault();
     connect(host, userId, password)
       .then(({ discovery, token }) => {
+        setConnection({ discovery, token });
         sync(discovery, token, { filter: FILTER_LAZY_LOAD }).then(handleSync);
         onConnect?.();
       })
@@ -67,8 +69,6 @@ export default function Connect({ onConnect }: Props): JSX.Element {
 async function connect(host: string, user: string, password: string) {
   const discovery = await discover(host);
   const token = await login(discovery, user, password);
-
-  console.debug({ discovery, token });
 
   return { discovery, token };
 }

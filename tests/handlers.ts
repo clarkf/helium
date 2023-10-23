@@ -1,5 +1,6 @@
 import type { ResponseResolver, RestRequest, RestContext } from "msw";
-import { DiscoveryInformation } from "../src/matrix";
+import type { DiscoveryInformation, SyncResponse } from "../src/matrix";
+
 import { randomBytes } from "node:crypto";
 
 type Resolver = ResponseResolver<RestRequest, RestContext>;
@@ -15,6 +16,10 @@ export const resolveDiscovery = (homeserver: string): Resolver =>
     },
   });
 
+export const resolveEmptySync = resolveDoc<SyncResponse>({
+  next_batch: "unknown",
+});
+
 function defaultGenToken(): string {
   return randomBytes(20).toString("hex");
 }
@@ -29,7 +34,6 @@ export const resolveLogin =
       request?.type !== "m.login.password" ||
       request?.identifier?.type !== "m.id.user"
     ) {
-      console.error("unexpected type????");
       return res(ctx.status(403), ctx.json({}));
     }
 

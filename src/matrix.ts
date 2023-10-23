@@ -26,11 +26,12 @@ export interface LoginResponse {
 }
 
 export interface SyncResponse {
-  rooms: {
-    join: Record<
+  next_batch: string;
+  rooms?: {
+    join?: Record<
       RoomId,
       {
-        state: { events: ClientEventWithoutRoomID[] };
+        state?: { events?: ClientEventWithoutRoomID[] };
       }
     >;
   };
