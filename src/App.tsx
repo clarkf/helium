@@ -1,10 +1,11 @@
-import Connect from "./app/Connect";
-
 import { useApp } from "./state";
+
+import Connect from "./app/Connect";
+import Sidebar from "./app/Sidebar";
 
 export default function App() {
   const isConnected = useApp((s) => s.connection != null);
-  const isSyncing = useApp((s) => Object.keys(s.rooms).length < 1);
+  const isSyncing = useApp((s) => s.rooms === null);
   const state = useApp((s) => ({ rooms: s.rooms, connection: s.connection }));
 
   if (!isConnected) {
@@ -17,12 +18,15 @@ export default function App() {
 
   // We're connected and have synced
   return (
-    <FullScreen>
-      <h4>State</h4>
-      <code>
-        <pre>{JSON.stringify(state, null, 4)}</pre>
-      </code>
-    </FullScreen>
+    <div className="two-column">
+      <Sidebar />
+      <main>
+        <h4>State</h4>
+        <code>
+          <pre>{JSON.stringify(state, null, 4)}</pre>
+        </code>
+      </main>
+    </div>
   );
 }
 
@@ -36,7 +40,12 @@ function ConnectScreen(): JSX.Element {
 }
 
 function SyncingScreen(): JSX.Element {
-  return <p>Please hold, initial synchronization is in process.</p>;
+  return (
+    <FullScreen>
+      <h2>Syncing...</h2>
+      <p>Please hold, initial synchronization is in progress.</p>
+    </FullScreen>
+  );
 }
 
 function FullScreen({ children }: React.PropsWithChildren): JSX.Element {

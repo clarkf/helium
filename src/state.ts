@@ -13,7 +13,7 @@ type Connection = { token: LoginResponse; discovery: DiscoveryInformation };
 
 export interface AppState {
   connection: null | Connection;
-  rooms: Record<RoomId, RoomState>;
+  rooms: null | Record<RoomId, RoomState>;
 }
 
 export interface RoomState {
@@ -37,7 +37,7 @@ export function reduceSync(
 
 function reduceEvent(state: Readonly<AppState>, event: ClientEvent): AppState {
   const roomId = event.room_id;
-  const room: RoomState = state.rooms[roomId] ?? { members: [] };
+  const room: RoomState = state.rooms?.[roomId] ?? { members: [] };
 
   const newRoom = reduceRoomEvent(room, event);
 
@@ -97,7 +97,7 @@ export interface AppStore extends AppState {
 
 export const useApp = create<AppStore>()((set) => ({
   connection: null,
-  rooms: {},
-  setConnection: (connection) => set({ connection, rooms: {} }),
+  rooms: null,
+  setConnection: (connection) => set({ connection, rooms: null }),
   handleSync: (sync) => set((state) => reduceSync(state, sync)),
 }));

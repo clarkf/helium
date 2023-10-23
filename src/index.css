@@ -54,3 +54,49 @@ button {
 button:hover {
   background-color: var(--waikawa-gray-600);
 }
+
+.two-column {
+  display: flex;
+  height: 100vh;
+}
+
+.two-column > * {
+  overflow-y: scroll;
+}
+
+.two-column .sidebar {
+  flex-basis: 25%;
+  background-color: var(--waikawa-gray-300);
+}
+
+.two-column > main {
+  padding-left: 1rem;
+  flex-basis: 75%;
+}
+
+.sidebar h3 {
+  padding: 1rem 0.75rem;
+  margin: 0;
+  color: var(--waikawa-gray-800);
+  background-color: var(--waikawa-gray-500);
+}
+
+ul.nav {
+  list-style-type: none;
+}
+
+ul.nav,
+ul.nav li {
+  margin: 0;
+  padding: 0;
+}
+
+ul.nav a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+ul.nav a:hover {
+  background-color: var(--waikawa-gray-400);
+}
